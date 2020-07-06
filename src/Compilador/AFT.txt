@@ -1,0 +1,165 @@
+digraph G{
+
+"82_Inicio" -> "9_Asignacion";
+
+"9_Asignacion" -> "2_Tipo";
+
+"2_Tipo" -> "1_int";
+
+"9_Asignacion" -> "4_ID";
+
+"4_ID" -> "3_valor";
+
+"9_Asignacion" -> "6_ID";
+
+"6_ID" -> "5_i";
+
+"9_Asignacion" -> "8_ID";
+
+"8_ID" -> "7_resp";
+
+"82_Inicio" -> "50_Funcion Larga";
+
+"50_Funcion Larga" -> "11_Tipo";
+
+"11_Tipo" -> "10_int";
+
+"50_Funcion Larga" -> "13_ID";
+
+"13_ID" -> "12_factorial";
+
+"50_Funcion Larga" -> "19_Parametros";
+
+"19_Parametros" -> "18_Compuesto";
+
+"18_Compuesto" -> "15_Tipo";
+
+"15_Tipo" -> "14_int";
+
+"18_Compuesto" -> "17_ID";
+
+"17_ID" -> "16_n";
+
+"50_Funcion Larga" -> "49_Declaracion";
+
+"49_Declaracion" -> "48_If";
+
+"48_If" -> "25_Expresion";
+
+"25_Expresion" -> "24_Expresion Igualdad";
+
+"24_Expresion Igualdad" -> "21_ID";
+
+"21_ID" -> "20_n";
+
+"24_Expresion Igualdad" -> "23_Num";
+
+"23_Num" -> "22_1";
+
+"48_If" -> "30_Declaracion";
+
+"30_Declaracion" -> "29_Return";
+
+"29_Return" -> "28_Expresion";
+
+"28_Expresion" -> "27_ID";
+
+"27_ID" -> "26_n";
+
+"48_If" -> "47_Else";
+
+"47_Else" -> "46_Declaracion";
+
+"46_Declaracion" -> "45_Return";
+
+"45_Return" -> "44_Expresion";
+
+"44_Expresion" -> "43_Expresion Multiplicacion";
+
+"43_Expresion Multiplicacion" -> "32_ID";
+
+"32_ID" -> "31_n";
+
+"43_Expresion Multiplicacion" -> "42_Llamada Funcion";
+
+"42_Llamada Funcion" -> "34_ID";
+
+"34_ID" -> "33_factorial";
+
+"42_Llamada Funcion" -> "41_Parametros";
+
+"41_Parametros" -> "40_Expresion";
+
+"40_Expresion" -> "39_Expresion Resta";
+
+"39_Expresion Resta" -> "36_ID";
+
+"36_ID" -> "35_n";
+
+"39_Expresion Resta" -> "38_Num";
+
+"38_Num" -> "37_1";
+
+"82_Inicio" -> "81_Funcion Larga";
+
+"81_Funcion Larga" -> "52_Tipo";
+
+"52_Tipo" -> "51_int";
+
+"81_Funcion Larga" -> "54_ID";
+
+"54_ID" -> "53_main";
+
+"81_Funcion Larga" -> "80_Declaracion";
+
+"80_Declaracion" -> "57_Printf";
+
+"57_Printf" -> "56_Cadena";
+
+"56_Cadena" -> "55_Ingrese numero: ";
+
+"80_Declaracion" -> "63_Scanf";
+
+"63_Scanf" -> "59_Cadena";
+
+"59_Cadena" -> "58_%d";
+
+"63_Scanf" -> "62_Ampersand";
+
+"62_Ampersand" -> "61_ID";
+
+"61_ID" -> "60_valor";
+
+"80_Declaracion" -> "74_Expresion";
+
+"74_Expresion" -> "73_Expresion Asignacion";
+
+"73_Expresion Asignacion" -> "65_ID";
+
+"65_ID" -> "64_resp";
+
+"73_Expresion Asignacion" -> "72_Llamada Funcion";
+
+"72_Llamada Funcion" -> "67_ID";
+
+"67_ID" -> "66_factorial";
+
+"72_Llamada Funcion" -> "71_Parametros";
+
+"71_Parametros" -> "70_Expresion";
+
+"70_Expresion" -> "69_ID";
+
+"69_ID" -> "68_valor";
+
+"80_Declaracion" -> "79_Printf";
+
+"79_Printf" -> "76_Cadena";
+
+"76_Cadena" -> "75_\nRespuesta: %d";
+
+"79_Printf" -> "78_ID";
+
+"78_ID" -> "77_resp";
+
+}

@@ -1,0 +1,826 @@
+package Compilador;
+
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+
+parser code {:
+ 
+    Arbol arbol = new Arbol();
+    
+    public void syntax_error(Symbol s) { 
+       System.out.println("Error Sintáctico en la Línea " + (s.right + 1) +
+       " Columna "+ s.left + ". No se esperaba este componente: " + s.value);
+    } 
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception { 
+        System.out.println("Error síntactico irrecuperable en la Línea " + 
+        (s.right) + " Columna " + s.left + ". Componente " + s.value + 
+        " no reconocido.");
+    } 
+
+:}
+
+action code {:
+    int token = 0;
+    int declaraciones = 0;
+:}
+
+terminal String        ID, NUMEROS, IF, ELSE, WHILE, FOR,
+                       INTEGER, CHAR, ASTERISCO, PUNTOYCOMA,
+                       DOSPUNTOS, COMA, PARIZQ, PARDER, LLAVEIZQ, LLAVEDER, MAYOR, MENOR,
+                       IGUAL, IGUALIGUAL, MAS, MASMAS, MENOS, MENOSMENOS, DIVISION, DIFERENTE, 
+                       PRINTF, SCANF, VOID, AMP, PREGUNTA, CADENA,
+                       AND, OR, CARACTER, RETURN, COMILLADOBLE;
+
+non terminal  String   inicio, inicios, superinicio, declaracion, declaracion2,
+                       if, else, for, for2, while, return, llamada,
+                       supertipo, tipo, tipo1, printf, printf2, scanf, scanf2, scanf3,
+                       E1, T1, F1, G1, H1, I1,
+                       E2, T2, F2,
+                       E3, T3, F3, G3,
+                       E4, T4, 
+                       expresion, expresion2, asignacion, id, cadena;
+
+start with superinicio;
+
+// Comienzo
+superinicio::= inicios:i
+                {:
+                    arbol.CrearArchivo(i);
+                :};
+
+inicios::= inicio:i inicios:i2
+            {:
+                String ast = "\n\"" + Integer.toString(token) + "_Inicio\" -> " + i;
+                ast += i2;
+                RESULT = ast;   
+            :}
+            |
+            {:
+                token++;
+                RESULT = "";
+            :};
+
+inicio::= supertipo:st id:id2 PARIZQ E3:e3 PARDER LLAVEIZQ declaracion:d LLAVEDER
+           {:
+              token++;
+              String tok = Integer.toString(token);
+              String ast = "\""+ tok + "_Funcion Larga\";\n";
+              ast += "\n\"" + tok + "_Funcion Larga\" -> " + st;
+              ast += "\n\"" + tok + "_Funcion Larga\" -> " + id2;
+              if (e3 != "") {
+                  ast += "\n\"" + tok + "_Funcion Larga\" -> " + e3;
+              } 
+              if (d != "") {
+                  ast += "\n\"" + tok + "_Funcion Larga\" -> " + d;
+              }
+              RESULT = ast;
+          :} 
+          | supertipo:st id:id2 PARIZQ E3:e3 PARDER PUNTOYCOMA
+          {:
+              token++;
+              String tok = Integer.toString(token);
+              String ast = "\""+ tok + "_Funcion Corta\";\n";
+              ast += "\n\"" + tok + "_Funcion Corta\" -> " + st;
+              ast += "\n\"" + tok + "_Funcion Corta\" -> " + id2;
+              if (e3 != "") {
+                  ast += "\n\"" + tok + "_Funcion Corta\" -> " + e3;
+              }
+              RESULT = ast;
+          :}
+          | asignacion:asig
+          {:
+              RESULT = asig;
+          :};
+
+// Tipos
+supertipo::= VOID 
+              {:
+                  token++;
+                  String tok = Integer.toString(token);
+                  token++;
+                  String tok1 = Integer.toString(token);
+                  String ast = "\""+ tok1 + "_Tipo\";\n";
+                  ast += "\n\"" + tok1 + "_Tipo\" -> \"" + tok + "_void\";\n";
+                  RESULT = ast;
+              :}
+              | tipo:t
+              {:
+                  RESULT = t;
+              :};
+
+tipo::= INTEGER tipo1:t1
+          {:
+              token++;
+              String tok = Integer.toString(token);
+              token++;
+              String tok1 = Integer.toString(token);
+              String ast = "\""+ tok1 + "_Tipo\";\n";
+              ast += "\n\"" + tok1 + "_Tipo\" -> \"" + tok + "_int" + t1 + "\";\n";
+              RESULT = ast;
+          :}
+          | CHAR tipo1:t1
+          {:
+              token++;
+              String tok = Integer.toString(token);
+              token++;
+              String tok1 = Integer.toString(token);
+              String ast = "\""+ tok1 + "_Tipo\";\n";
+              ast += "\n\"" + tok1 + "_Tipo\" -> \"" + tok + "_char" + t1 + "\";\n";
+              RESULT = ast;
+          :};  
+
+tipo1::= ASTERISCO 
+          {:
+              RESULT = "*";
+          :} 
+          | 
+          {:
+              RESULT = "";
+          :};
+
+id::= ID:i
+          {:
+              token++;
+              String tok = Integer.toString(token);
+              token++;
+              String ast = "\""+ Integer.toString(token) + "_ID\";\n";
+              ast += "\n\"" + Integer.toString(token) + "_ID\" -> \"" + tok + "_" + i + "\";\n";
+              RESULT = ast;
+          :};
+          
+// Expresiones
+E1::= I1:i1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion\";\n";
+            ast += "\n\"" + tok + "_Expresion\" -> " + i1;
+            RESULT = ast; 
+        :};
+
+I1::=   I1:i1 AND T1:t1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion And\";\n";
+            ast += "\n\"" + tok + "_Expresion And\" -> " + i1;
+            ast += "\n\"" + tok + "_Expresion And\" -> " + t1;
+            RESULT = ast;
+        :}
+        | T1:t1
+        {:
+            RESULT = t1;
+        :};
+
+T1::= T1:t1 MAS F1:f1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Suma\";\n";
+            ast += "\n\"" + tok + "_Expresion Suma\" -> " + t1;
+            ast += "\n\"" + tok + "_Expresion Suma\" -> " + f1;
+            RESULT = ast;
+        :} 
+        | T1:t1 MENOS F1:f1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Resta\";\n";
+            ast += "\n\"" + tok + "_Expresion Resta\" -> " + t1;
+            ast += "\n\"" + tok + "_Expresion Resta\" -> " + f1;
+            RESULT = ast;
+        :} 
+        | T1:t1 OR F1:f1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Or\";\n";
+            ast += "\n\"" + tok + "_Expresion Or\" -> " + t1;
+            ast += "\n\"" + tok + "_Expresion Or\" -> " + f1;
+            RESULT = ast;
+        :}
+        | F1:f1
+        {:
+            RESULT = f1;
+        :};
+
+F1::= F1:f1 ASTERISCO G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Multiplicacion\";\n";
+            ast += "\n\"" + tok + "_Expresion Multiplicacion\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Multiplicacion\" -> " + g1;
+            RESULT = ast;
+        :} 
+        | F1:f1 DIVISION G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Division\";\n";
+            ast += "\n\"" + tok + "_Expresion Division\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Division\" -> " + g1;
+            RESULT = ast;
+        :} 
+        | F1:f1 PREGUNTA F1:f2 DOSPUNTOS G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Condicional\";\n";
+            ast += "\n\"" + tok + "_Expresion Condicional\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Condicional\" -> " + f2;
+            ast += "\n\"" + tok + "_Expresion Condicional\" -> " + g1;
+            RESULT = ast;
+        :} 
+        | F1:f1 IGUALIGUAL G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Igualdad\";\n";
+            ast += "\n\"" + tok + "_Expresion Igualdad\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Igualdad\" -> " + g1;
+            RESULT = ast;
+        :} 
+        | F1:f1 DIFERENTE IGUAL G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Diferencia\";\n";
+            ast += "\n\"" + tok + "_Expresion Diferencia\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Diferencia\" -> " + g1;
+            RESULT = ast;
+        :}  
+        | F1:f1 MENOR G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Menor\";\n";
+            ast += "\n\"" + tok + "_Expresion Menor\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Menor\" -> " + g1;
+            RESULT = ast;
+        :}
+        | F1:f1 MENOR IGUAL G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Menor Igual\";\n";
+            ast += "\n\"" + tok + "_Expresion Menor Igual\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Menor Igual\" -> " + g1;
+            RESULT = ast;
+        :} 
+        | F1:f1 MAYOR G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Mayor\";\n";
+            ast += "\n\"" + tok + "_Expresion Mayor\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Mayor\" -> " + g1;
+            RESULT = ast;
+        :}
+        | F1:f1 MAYOR IGUAL G1:g1
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Mayor Igual\";\n";
+            ast += "\n\"" + tok + "_Expresion Mayor Igual\" -> " + f1;
+            ast += "\n\"" + tok + "_Expresion Mayor Igual\" -> " + g1;
+            RESULT = ast;
+        :}
+        | G1:g1
+        {:
+            RESULT = g1;
+        :};
+
+G1::= NUMEROS:num 
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            token++;
+            String ast = "\""+ Integer.toString(token) + "_Num\";\n";
+            ast += "\n\"" + Integer.toString(token) + "_Num\" -> \"" + tok + "_" + num + "\";\n";
+            RESULT = ast;
+        :}
+        | CARACTER:car 
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            token++;
+            String ast = "\""+ Integer.toString(token) + "_Caracter\";\n";
+            ast += "\n\"" + Integer.toString(token) + "_Caracter\" -> \"" + tok + "_" + car + "\";\n";
+            RESULT = ast;
+        :}
+        | id:id2 H1:h1
+        {:
+            String ast = "";
+            if (h1 != "") {
+              token++;
+              String tok = Integer.toString(token);
+              if (h1.equals("++")) {
+                ast += "\"" + tok + "_Auto Incremento\";\n";
+                ast += "\n\"" + tok + "_Auto Incremento\" -> " + id2;
+              } else if (h1.equals("--")) {
+                ast += "\"" + tok + "_Auto Decremento\";\n";
+                ast += "\n\"" + tok + "_Auto Decremento\" -> " + id2;
+              } else {
+                ast += "\"" + tok + "_Llamada Funcion\";\n";
+                ast += "\n\"" + tok + "_Llamada Funcion\" -> " + id2;
+                if (h1 != ".") {
+                    ast += "\n\"" + tok + "_Llamada Funcion\" -> " + h1;
+                }
+              }
+            } else {
+              ast += id2;
+            }
+            RESULT = ast;
+        :} 
+        | PARIZQ I1:i1 PARDER 
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion Parentesis\";\n";
+            ast += "\n\"" + tok + "_Expresion Parentesis\" -> " + i1;
+            RESULT = ast;
+        :}
+        | ASTERISCO id:id2
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Apuntador\";\n";
+            ast += "\n\"" + tok + "_Apuntador\" -> " + id2;
+            RESULT = ast;
+        :}
+        | AMP id:id2
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Ampersand\";\n";
+            ast += "\n\"" + tok + "_Ampersand\" -> " + id2;
+            RESULT = ast;
+        :};
+
+H1::= MASMAS:mm 
+        {:
+            RESULT = mm;
+        :}
+        | MENOSMENOS:mm
+        {:
+            RESULT = mm;
+        :}
+        | PARIZQ E4:e4 PARDER 
+        {:
+            String ast = ".";
+            if (e4 != "") {
+                ast = e4;
+            }
+            RESULT = ast;
+        :} 
+        | 
+        {:
+            RESULT = "";
+        :};
+
+// Asignaciones
+E2::= supertipo:t id:id2 T2:t2
+        {:
+            String ast = "\"" + Integer.toString(token) + "_Asignacion\";\n";
+            ast += "\n\"" + Integer.toString(token) + "_Asignacion\" -> " + t;
+            ast += "\n\"" + Integer.toString(token) + "_Asignacion\" -> " + id2;
+            ast += t2;
+            RESULT = ast;
+        :};
+
+T2::= COMA F2:f2 T2:t2 
+        {:
+            String ast = "\n\"" + Integer.toString(token) + "_Asignacion\" -> " + f2;
+            ast += t2;
+            RESULT = ast;
+        :} 
+        | 
+        {:
+            token++;
+            RESULT = "";
+        :};
+
+F2::= tipo1:t1 id:id2
+         {:
+            String ast = "";
+            if (t1 != "") {
+                token++;
+                String tok = Integer.toString(token);
+                ast += "\"" + tok + "_Apuntador\";\n";
+                ast += "\n\"" + tok + "_Apuntador\" -> " + id2;
+            } else {
+                ast += id2;
+            }
+            RESULT = ast;
+        :};
+
+// Parametros - en Función
+E3::= F3:f3 G3:g3 
+        {:
+            String ast = "\"" + Integer.toString(token) + "_Parametros\";\n";
+            ast += "\n\"" + Integer.toString(token) + "_Parametros\" -> " + f3;
+            ast += g3;
+            RESULT = ast;
+        :} 
+        | 
+        {:
+            RESULT = "";
+        :};
+
+F3::= supertipo:st T3:t3
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "";
+            if (t3 != "") {
+                ast += "\"" + tok + "_Compuesto\";\n";
+                ast += "\n\"" + tok + "_Compuesto\" -> " + st;
+                ast += "\n\"" + tok + "_Compuesto\" -> " + t3;
+            } else {
+                ast += "\"" + tok + "_Simple\";\n";
+                ast += "\n\"" + tok + "_Simple\" -> " + st;
+            }
+            RESULT = ast;
+        :};     
+
+T3::= id:id2
+        {:
+            RESULT = id2;
+        :} 
+        | 
+        {:
+            RESULT = "";
+        :}; 
+
+G3::= COMA F3:f3 G3:g3 
+        {:
+            String ast = "\"" + Integer.toString(token) + "_Parametros\";\n";
+            ast += "\n\"" + Integer.toString(token) + "_Parametros\" -> " + f3;
+            ast += g3;
+            RESULT = ast;
+        :}
+        |
+        {:
+            token++;
+            RESULT = "";
+        :};
+
+// Parametros - Llamada a Función
+E4::= E1:e1 T4:t4 
+        {:
+            String tok = Integer.toString(token);
+            String ast = "\""+ tok + "_Parametros\";\n";
+            ast += "\n\"" + tok + "_Parametros\" -> " + e1;
+            ast += t4;
+            RESULT = ast;
+        :} 
+        | 
+        {:
+            RESULT = "";
+        :};
+
+T4::= COMA E1:e1 T4:t4
+        {:
+            String tok = Integer.toString(token);
+            String ast = "\n\"" + tok + "_Parametros\" -> " + e1;
+            ast += t4;
+            RESULT = ast;
+        :}
+        | 
+        {:
+            token++;
+            RESULT = "";
+        :};
+
+// Declaraciones - If, For, While, Expresion, Asignacion, Printf, Scanf, Return
+declaracion::=  asignacion:asig declaracion:d 
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                          token--;
+                          declaraciones--;
+                      }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + asig;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :} 
+                  | declaracion2:d2 
+                  {:
+                      RESULT = d2;
+                  :}; 
+
+declaracion2::= if:if1 declaracion2:d
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                        token--;
+                        declaraciones--;
+                      }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + if1;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :}               
+                  | for:f1 declaracion2:d  
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                        token--;
+                        declaraciones--;
+                      }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + f1;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :}
+                  | while:w1 declaracion2:d 
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                        token--;
+                        declaraciones--;
+                      }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + w1;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :}
+                  | expresion:expre PUNTOYCOMA declaracion2:d  
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                          token--;
+                          declaraciones--;
+                        }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + expre;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :} 
+                  | printf:pf declaracion2:d 
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                        token--;
+                        declaraciones--;
+                      }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + pf;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :}
+                  | scanf:sf declaracion2:d 
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                        token--;
+                        declaraciones--;
+                      }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + sf;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :}
+                  | llamada:ll declaracion2:d 
+                  {:
+                      token++;
+                      if (declaraciones > 0) {
+                        token--;
+                        declaraciones--;
+                      }
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + ll;
+                      ast += d;
+                      RESULT = ast;
+                      declaraciones++;
+                  :}
+                  | return:r 
+                  {:
+                      token++;
+                      String ast = "\"" + Integer.toString(token) + "_Declaracion\";\n";
+                      ast += "\n\"" + Integer.toString(token) + "_Declaracion\" -> " + r;
+                      RESULT = ast;
+                      declaraciones++;
+                  :} 
+                  | error declaracion |
+                  {:
+                      RESULT = "";
+                      declaraciones = 0;
+                  :};
+
+// If
+if::= IF PARIZQ E1:e1 PARDER LLAVEIZQ declaracion2:d LLAVEDER else:els 
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_If\";\n";
+            ast += "\n\"" + tok + "_If\" -> " + e1;
+            ast += "\n\"" + tok + "_If\" -> " + d;
+            if (els != "") { 
+              ast += "\n\"" + tok + "_If\" -> " + els;   
+            }     
+            RESULT = ast;       
+            declaraciones = 0;
+        :};
+
+// Else
+else::= ELSE LLAVEIZQ declaracion2:d LLAVEDER
+          {:
+              token++;
+              String ast = "\"" + Integer.toString(token) + "_Else\";\n";
+              ast += "\n\"" + Integer.toString(token) + "_Else\" -> " + d;
+              RESULT = ast;
+          :}
+          |
+          {:
+              RESULT = "";
+          :};
+
+// For
+for::= FOR PARIZQ expresion:expre1 PUNTOYCOMA E1:expre2 PUNTOYCOMA for2:expre3 PARDER LLAVEIZQ declaracion2:d LLAVEDER
+          {:
+              token++;
+              String tok =  Integer.toString(token);
+              String ast = "\"" + tok + "_For\";\n";
+              ast += "\n\"" + tok + "_For\" -> " + expre1;
+              ast += "\n\"" + tok + "_For\" -> " + expre2;
+              ast += "\n\"" + tok + "_For\" -> " + expre3;
+              ast += "\n\"" + tok + "_For\" -> " + d;
+              RESULT = ast;    
+              declaraciones = 0;
+          :};
+
+for2::= expresion:expre
+          {:
+              RESULT = expre;
+          :} 
+          | 
+          E1:e1
+          {:
+              RESULT = e1;
+          :};
+
+// While
+while::= WHILE PARIZQ E1:e1 PARDER LLAVEIZQ declaracion2:d LLAVEDER
+            {:
+                token++;
+                String tok =  Integer.toString(token);
+                String ast = "\"" + tok + "_While\";\n";
+                ast += "\n\"" + tok + "_While\" -> " + e1;
+                ast += "\n\"" + tok + "_While\" -> " + d;
+                RESULT = ast;     
+                declaraciones = 0;
+            :};
+
+// Printf
+printf::= PRINTF PARIZQ COMILLADOBLE cadena:ca printf2:p2 PARDER PUNTOYCOMA 
+            {:
+                token++;
+                String ast = "\"" + Integer.toString(token) + "_Printf\";\n";
+                ast += "\n\"" + Integer.toString(token) + "_Printf\" -> " + ca;
+                if (p2 != "") {
+                    ast += "\n\"" + Integer.toString(token) + "_Printf\" -> " + p2;
+                }
+                RESULT = ast;
+            :};
+
+printf2::= COMA tipo1:t1 id:id2
+              {:
+                String ast = "";
+                if (t1.equals("*")) {
+                    token++;
+                    String tok = Integer.toString(token);
+                    ast += "\"" + tok + "_Apuntador\";\n";
+                    ast += "\n\"" + tok + "_Apuntador\" -> " + id2;
+                } else {
+                    ast += id2;
+                }
+                RESULT = ast;
+              :} 
+              | 
+              COMA NUMEROS:num 
+              {:
+                token++;
+                String tok = Integer.toString(token);
+                token++;
+                String ast = "\""+ Integer.toString(token) + "_Num\";\n";
+                ast += "\n\"" + Integer.toString(token) + "_Num\" -> \"" + tok + "_" + num + "\";\n";
+                RESULT = ast;
+              :}
+              | 
+              COMA CARACTER:car 
+              {:
+                token++;
+                String tok = Integer.toString(token);
+                token++;
+                String ast = "\""+ Integer.toString(token) + "_Caracter\";\n";
+                ast += "\n\"" + Integer.toString(token) + "_Caracter\" -> \"" + tok + "_" + car + "\";\n";
+                RESULT = ast;
+              :}
+              |
+              {:
+                RESULT = "";
+              :};
+
+cadena::= CADENA:ca 
+            {:
+                token++;
+                String tok = Integer.toString(token);
+                token++;
+                String ast = "\""+ Integer.toString(token) + "_Cadena\";\n";
+                ast += "\n\"" + Integer.toString(token) + "_Cadena\" -> \"" + tok + "_" + ca + "\";\n";
+                RESULT = ast;
+            :};
+
+// Scanf
+scanf::= SCANF PARIZQ COMILLADOBLE cadena:ca COMA scanf2:s2 PARDER PUNTOYCOMA 
+            {:
+                token++;
+                String tok =  Integer.toString(token);
+                String ast = "\"" + tok + "_Scanf\";\n";
+                ast += "\n\"" + tok + "_Scanf\" -> " + ca;
+                ast += "\n\"" + tok + "_Scanf\" -> " + s2;
+                RESULT = ast;
+            :};
+
+scanf2::= scanf3:s3 id:id2
+        {:
+            String ast = "";
+            if (s3.equals("&")) {
+                token++;
+                String tok = Integer.toString(token);
+                ast += "\"" + tok + "_Ampersand\";\n";
+                ast += "\n\"" + tok + "_Ampersand\" -> " + id2;
+            } else {
+                ast += id2;
+            }
+            RESULT = ast;
+        :};
+
+scanf3::= AMP:amp
+        {:
+            RESULT = amp;
+        :} 
+        |
+        {:
+            RESULT = "";
+        :};
+
+// Llamada
+llamada::= id:id1 PARIZQ E4:e4 PARDER PUNTOYCOMA
+        {:
+            token++;
+            String tok =  Integer.toString(token);
+            String ast = "\"" + tok + "_Llamada Funcion\";\n";
+            ast += "\n\"" + tok + "_Llamada Funcion\" -> " + id1;
+            if (e4 != "") {
+                ast += "\n\"" + tok + "_Llamada Funcion\" -> " + e4;
+            }
+            RESULT = ast;
+        :};
+
+// Return
+return::= RETURN E1:e1 PUNTOYCOMA
+            {:
+                token++;
+                String tok =  Integer.toString(token);
+                String ast = "\"" + tok + "_Return\";\n";
+                ast += "\n\"" + tok + "_Return\" -> " + e1;
+                RESULT = ast;
+            :};
+
+// Expresion
+expresion::= expresion2:e2
+        {:
+            token++;
+            String tok = Integer.toString(token);
+            String ast = "\"" + tok + "_Expresion\";\n";
+            ast += "\n\"" + tok + "_Expresion\" -> " + e2;
+            RESULT = ast; 
+        :};
+
+expresion2::= id:id2 IGUAL I1:i1 
+              {:
+                token++;
+                String tok = Integer.toString(token);
+                String ast = "\"" + tok + "_Expresion Asignacion\";\n";
+                ast += "\n\"" + tok + "_Expresion Asignacion\" -> " + id2;
+                ast += "\n\"" + tok + "_Expresion Asignacion\" -> " + i1;
+                RESULT = ast;
+              :};
+
+// Asignacion          
+asignacion::= E2:e2 PUNTOYCOMA 
+                {:
+                    RESULT = e2;
+                :};
